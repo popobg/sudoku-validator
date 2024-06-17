@@ -1,115 +1,52 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SudokuValidator
+﻿namespace Sudoku
 {
-    internal class SudokuValidator
+    internal static class SudokuValidator
     {
-        // default value if no array is given to the constructor
-        private string[][] _sudoku =
-            [
-              ["8", "3", ".", ".", "7", ".", ".", ".", "."],
-              ["6", ".", ".", "1", "9", "5", ".", ".", "." ],
-              [ ".", "9", "8", ".", ".", ".", ".", "6", "." ],
-              [ ".", ".", ".", ".", "6", ".", ".", ".", "3" ],
-              [ "4", ".", ".", "8", ".", "3", ".", ".", "1" ],
-              [ "7", ".", ".", ".", "2", ".", ".", ".", "6" ],
-              [ ".", "6", ".", ".", ".", ".", "2", "8", "." ],
-              [ ".", ".", ".", "4", "1", "9", ".", ".", "5" ],
-              [ ".", ".", ".", ".", "8", ".", ".", "7", "9" ]
-            ];
-
-        public SudokuValidator() { }
-
-        public SudokuValidator(string[][] sudokuBoard)
+        private static bool CheckValues(List<string> values)
         {
-            this._sudoku = sudokuBoard;
-        }
-
-        public bool IsValid => this.CheckValidityArray();
-
-        private bool CheckLine(List<string> line)
-        {
-            foreach (string entry in line)
+            foreach (string value in values)
             {
-                if (entry != "." && line.Count(x => x == entry) > 1)
+                if (value != "." && values.Count(x => x == value) > 1)
                 {
                     return false;
-                }
-            }
-            return true;
-        }
-
-        private bool CheckColumn(int position)
-        {
-            List<string> listColumn = new();
-
-            foreach (string[] line in this._sudoku)
-            {
-                if (line[position] != "." && listColumn.Contains(line[position]))
-                {
-                    return false;
-                }
-                listColumn.Add(line[position]);
-            }
-
-            return true;
-        }
-
-        private bool CheckSubBox(int i, int j)
-        {
-            List<string> valuesInSubbox = new();
-
-            // check the number in the subbox (not in the same line and column)
-            for (int line = i; line <= i + 2; line++)
-            {
-                for (int column = j; column <= j + 2; column++)
-                {
-                    string currentValue = this._sudoku[line][column];
-
-                    if ( currentValue != "." && valuesInSubbox.Contains(currentValue))
-                    {
-                        return false;
-                    }
-
-                    valuesInSubbox.Add(currentValue);
                 }
             }
 
             return true;
         }
 
-        private bool CheckValidityArray()
+        // future improvement : more info about the location and the number concerned by the error.
+        private static void DisplayError(string cell, int index)
         {
-            for (int i = 0; i < this._sudoku.GetLength(0); i++)
+            Console.WriteLine($"There is an error in the {cell} {index}.");
+        }
+
+        public static bool Validate(Sudoku sudoku)
+        {
+            for (int i = 0; i < sudoku.LENGTH_DIMENSION; i++)
             {
-                if (!this.CheckLine(this._sudoku[i].ToList()))
+                if (!CheckValues(sudoku.GetLine(i)))
                 {
-                    Console.WriteLine($"same number in the line[{i}].");
+                    DisplayError("line", i + 1);
                     return false;
                 }
 
-                if (!this.CheckColumn(i))
+                if (!CheckValues(sudoku.GetColumn(i)))
                 {
-                    Console.WriteLine($"same number in a column.");
+                    DisplayError("column", i + 1);
                     return false;
                 }
 
-                // réfléchir pour checker seulement une fois pour chaque cellule 3x3
-                for (int j = 0; j < (this._sudoku[0].Count() - 2); j++)
+                for (int j = 0; j < sudoku.LENGTH_DIMENSION; j += 3)
                 {
-                    // take only the first, fourth and seventh lines and columns
-                    if (i % 3 != 0 && j % 3 != 0)
+                    if (i % 3 != 0)
                     {
                         continue;
                     }
 
-                    if (!this.CheckSubBox(i, j))
+                    if (!CheckValues(sudoku.GetSubbox(i, j)))
                     {
-                        Console.WriteLine($"Same number in a subbox.");
+                        Console.WriteLine($"There is an error in the subbox starting line {i + 1} and column {j + 1}.");
                         return false;
                     }
                 }
